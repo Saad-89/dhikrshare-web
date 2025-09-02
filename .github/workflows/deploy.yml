@@ -18,16 +18,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Check for pubspec.yaml
+        run: |
+          if [ ! -f pubspec.yaml ]; then
+            echo "pubspec.yaml not found in root directory"
+            echo "Looking for pubspec.yaml in subdirectories..."
+            find . -name "pubspec.yaml" -type f
+            exit 1
+          fi
+          echo "pubspec.yaml found in root directory"
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.3' # match your Flutter version
+          flutter-version: '3.22.3'
+          channel: 'stable'
+
+      - name: Enable web support
+        run: flutter config --enable-web
 
       - name: Install dependencies
         run: flutter pub get
 
       - name: Build Flutter Web
-        run: flutter build web --release
+        run: flutter build web --release --web-renderer html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
