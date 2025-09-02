@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy Flutter Web to GitHub Pages
 
 on:
   push:
@@ -13,25 +13,26 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
-          node-version: 18
+          flutter-version: '3.22.3' # match your Flutter version
 
       - name: Install dependencies
-        run: npm install
+        run: flutter pub get
 
-      - name: Build project
-        run: npm run build
+      - name: Build Flutter Web
+        run: flutter build web --release
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist   # change if your build folder is different
+          path: build/web
 
   deploy:
     environment:
@@ -42,4 +43,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
