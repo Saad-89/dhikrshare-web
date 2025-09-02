@@ -18,15 +18,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check for pubspec.yaml
+      - name: Find Flutter project
+        id: find_project
         run: |
-          if [ ! -f pubspec.yaml ]; then
-            echo "pubspec.yaml not found in root directory"
-            echo "Looking for pubspec.yaml in subdirectories..."
-            find . -name "pubspec.yaml" -type f
+          echo "Looking for pubspec.yaml files..."
+          find . -name "pubspec.yaml" -type f
+          
+          # Find the first pubspec.yaml file and get its directory
+          PUBSPEC_PATH=$(find . -name "pubspec.yaml" -type f | head -1)
+          if [ -z "$PUBSPEC_PATH" ]; then
+            echo "No pubspec.yaml found!"
             exit 1
           fi
-          echo "pubspec.yaml found in root directory"
+          
+          PROJECT_DIR=$(dirname "$PUBSPEC_PATH")
+          echo "Flutter project found in: $PROJECT_DIR"
+          echo "project_dir=$PROJECT_DIR" >> $GITHUB_OUTPUT
+          
+          # List the contents of the project directory
+          echo "Project directory contents:"
+          ls -la "$PROJECT_DIR"
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -39,14 +50,16 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+        working-directory: ${{ steps.find_project.outputs.project_dir }}
 
       - name: Build Flutter Web
         run: flutter build web --release --web-renderer html
+        working-directory: ${{ steps.find_project.outputs.project_dir }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: build/web
+          path: ${{ steps.find_project.outputs.project_dir }}/build/web
 
   deploy:
     environment:
